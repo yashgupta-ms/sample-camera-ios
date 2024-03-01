@@ -9,12 +9,13 @@
 /* Begin PBXBuildFile section */
 		3E3D31F32B8EEAA1009280C1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E3D31F22B8EEAA1009280C1 /* AppDelegate.swift */; };
 		3E3D31F52B8EEAA1009280C1 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E3D31F42B8EEAA1009280C1 /* SceneDelegate.swift */; };
-		3E3D31F72B8EEAA1009280C1 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E3D31F62B8EEAA1009280C1 /* ViewController.swift */; };
+		3E3D31F72B8EEAA1009280C1 /* CaptureViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E3D31F62B8EEAA1009280C1 /* CaptureViewController.swift */; };
 		3E3D31FC2B8EEAA2009280C1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3E3D31FB2B8EEAA2009280C1 /* Assets.xcassets */; };
 		3E3D31FF2B8EEAA2009280C1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3E3D31FD2B8EEAA2009280C1 /* LaunchScreen.storyboard */; };
 		3E3D320A2B8EEAA2009280C1 /* basic_cameraTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E3D32092B8EEAA2009280C1 /* basic_cameraTests.swift */; };
 		3E3D32142B8EEAA2009280C1 /* basic_cameraUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E3D32132B8EEAA2009280C1 /* basic_cameraUITests.swift */; };
 		3E3D32162B8EEAA2009280C1 /* basic_cameraUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E3D32152B8EEAA2009280C1 /* basic_cameraUITestsLaunchTests.swift */; };
+		3E3D32232B91FA60009280C1 /* ReviewViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E3D32222B91FA60009280C1 /* ReviewViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -38,7 +39,7 @@
 		3E3D31EF2B8EEAA1009280C1 /* basic-camera.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "basic-camera.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3E3D31F22B8EEAA1009280C1 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		3E3D31F42B8EEAA1009280C1 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		3E3D31F62B8EEAA1009280C1 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		3E3D31F62B8EEAA1009280C1 /* CaptureViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureViewController.swift; sourceTree = "<group>"; };
 		3E3D31FB2B8EEAA2009280C1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3E3D31FE2B8EEAA2009280C1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		3E3D32002B8EEAA2009280C1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -47,6 +48,7 @@
 		3E3D320F2B8EEAA2009280C1 /* basic-cameraUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "basic-cameraUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3E3D32132B8EEAA2009280C1 /* basic_cameraUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = basic_cameraUITests.swift; sourceTree = "<group>"; };
 		3E3D32152B8EEAA2009280C1 /* basic_cameraUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = basic_cameraUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		3E3D32222B91FA60009280C1 /* ReviewViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,10 +101,11 @@
 			children = (
 				3E3D31F22B8EEAA1009280C1 /* AppDelegate.swift */,
 				3E3D31F42B8EEAA1009280C1 /* SceneDelegate.swift */,
-				3E3D31F62B8EEAA1009280C1 /* ViewController.swift */,
+				3E3D31F62B8EEAA1009280C1 /* CaptureViewController.swift */,
 				3E3D31FB2B8EEAA2009280C1 /* Assets.xcassets */,
 				3E3D31FD2B8EEAA2009280C1 /* LaunchScreen.storyboard */,
 				3E3D32002B8EEAA2009280C1 /* Info.plist */,
+				3E3D32222B91FA60009280C1 /* ReviewViewController.swift */,
 			);
 			path = "basic-camera";
 			sourceTree = "<group>";
@@ -254,8 +257,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3E3D31F72B8EEAA1009280C1 /* ViewController.swift in Sources */,
+				3E3D31F72B8EEAA1009280C1 /* CaptureViewController.swift in Sources */,
 				3E3D31F32B8EEAA1009280C1 /* AppDelegate.swift in Sources */,
+				3E3D32232B91FA60009280C1 /* ReviewViewController.swift in Sources */,
 				3E3D31F52B8EEAA1009280C1 /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

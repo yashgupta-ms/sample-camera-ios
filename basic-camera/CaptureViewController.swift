@@ -8,7 +8,7 @@
 import UIKit
 import AVFoundation
 
-class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
+class CaptureViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     
     var captureSession: AVCaptureSession!
     var backCamera: AVCaptureDevice!
@@ -18,6 +18,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     var previewLayer: AVCaptureVideoPreviewLayer!
     var cameraOutput: AVCapturePhotoOutput!
     
+    var capturedImage: UIImage!
+    
     enum CameraState {
         case front
         case back
@@ -25,17 +27,22 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     
     var cameraState: CameraState = .back
     
-    let capturedImageView: UIImageView = {
+    lazy var capturedImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleToFill
         imageView.backgroundColor = UIColor.orange
         imageView.layer.cornerRadius = 10
         imageView.clipsToBounds = true
         imageView.translatesAutoresizingMaskIntoConstraints = false
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(moveToReviewVC))
+        imageView.isUserInteractionEnabled = true
+        imageView.addGestureRecognizer(tapGesture)
+        
         return imageView
     }()
     
-    let captureButton: UIButton = {
+    lazy var captureButton: UIButton = {
         let button = UIButton()
         button.backgroundColor = .black
         button.tintColor = .white
@@ -45,7 +52,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         return button
     }()
     
-    let switchButton: UIButton = {
+    lazy var switchButton: UIButton = {
         let image = UIImage(named: "switch_camera")
         let button = UIButton()
         button.setImage(image, for: .normal)
@@ -65,6 +72,11 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         setUpCameraSession()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: animated)
+    }
+
     func getPermissions() {
         let cameraAuthStatus = AVCaptureDevice.authorizationStatus(for: .video)
         switch cameraAuthStatus {
@@ -92,7 +104,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         view.addSubview(switchButton)
         
         NSLayoutConstraint.activate([
-            capturedImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+            capturedImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 5),
             capturedImageView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 10),
             capturedImageView.widthAnchor.constraint(equalToConstant: 55),
             capturedImageView.heightAnchor.constraint(equalToConstant: 55),
@@ -102,7 +114,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             captureButton.heightAnchor.constraint(equalToConstant: 60),
             captureButton.widthAnchor.constraint(equalToConstant: 60),
             
-            switchButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 15),
+            switchButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
             switchButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
             switchButton.heightAnchor.constraint(equalToConstant: 30),
             switchButton.widthAnchor.constraint(equalToConstant: 30)
@@ -179,6 +191,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     }
     
     @objc func switchCamera() {
+        print("DEBUG: \(#function) called")
         if cameraState == .back {
             cameraState = .front
         } else {
@@ -189,6 +202,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     }
     
     @objc func capturePhoto() {
+        print("DEBUG: \(#function) called")
         let settings = AVCapturePhotoSettings()
         cameraOutput.capturePhoto(with: settings, delegate: self)
     }
@@ -210,9 +224,26 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         guard let _photo = photo.fileDataRepresentation() else { fatalError("could not covert image to fileData") }
-        let capturedImage = UIImage(data: _photo)
+        let _capturedImage = UIImage(data: _photo)
         
-        capturedImageView.image = capturedImage
+        DispatchQueue.main.async {
+            self.capturedImage = _capturedImage
+            self.capturedImageView.image = _capturedImage
+        }
+    }
+    
+    @objc func moveToReviewVC() {
+        print("DEBUG: \(#function) called")
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            if self.captureSession != nil {
+                // can remove this too for faster camera re-start
+                self.captureSession.stopRunning()
+            }
+        }
+        let destinationVC = ReviewViewController()
+        destinationVC.capturedImage = capturedImage
+        navigationController?.pushViewController(destinationVC, animated: true)
     }
 }
 
