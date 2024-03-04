@@ -4,6 +4,8 @@
 <dict>
 	<key>NSCameraUsageDescription</key>
 	<string>The app requires access to camera to proceed.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>The app requires access to microphone for video capture</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

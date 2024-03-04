@@ -7,9 +7,17 @@
 
 import Foundation
 import UIKit
+import AVFoundation
 
 class ReviewViewController: UIViewController {
     var capturedImage: UIImage!
+    var captureVideoPath: URL!
+    var mediaType: MediaType!
+    
+    enum MediaType {
+        case photo
+        case video
+    }
     
     let imageView: UIImageView = {
         let imageView = UIImageView()
@@ -33,6 +41,14 @@ class ReviewViewController: UIViewController {
     
     func setupView() {
         view.backgroundColor = .black
+        if self.mediaType == .photo {
+            handlePhoto()
+        } else {
+            handleVideo()
+        }
+    }
+    
+    func handlePhoto() {
         view.addSubview(imageView)
         if let capturedImage {
             imageView.image = capturedImage
@@ -44,5 +60,14 @@ class ReviewViewController: UIViewController {
             imageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             imageView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
         ])
+    }
+    
+    func handleVideo() {
+        let player = AVPlayer(url: captureVideoPath!)
+        let playerLayer = AVPlayerLayer(player: player)
+        let topMargin: CGFloat = 25
+        playerLayer.frame = CGRect(x: 0, y: topMargin, width: self.view.bounds.width, height: self.view.bounds.height - topMargin)
+        self.view.layer.addSublayer(playerLayer)
+        player.play()
     }
 }
