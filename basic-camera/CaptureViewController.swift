@@ -26,6 +26,9 @@ class CaptureViewController: UIViewController, AVCapturePhotoCaptureDelegate, AV
     var capturedImage: UIImage!
     var capturedVideoPath: URL!
     
+    var timer: Timer?
+    var elapsedTime: TimeInterval = 0.0
+    
     enum CameraState {
         case front
         case back
@@ -41,13 +44,15 @@ class CaptureViewController: UIViewController, AVCapturePhotoCaptureDelegate, AV
     
     var lastCapturedMedia: MediaType!
     
+    var isFlashOn = false
+    
     lazy var captureButton: UIButton = {
         let button = UIButton()
         
         button.layer.cornerRadius = 34
         button.layer.borderWidth = 5
         button.layer.borderColor = UIColor.black.withAlphaComponent(0.75).cgColor
-        button.backgroundColor = UIColor.gray.withAlphaComponent(0.4)
+        button.backgroundColor = UIColor.white.withAlphaComponent(0.6)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.clipsToBounds = true
         
@@ -76,16 +81,49 @@ class CaptureViewController: UIViewController, AVCapturePhotoCaptureDelegate, AV
         let image = UIImage(named: "switch_camera")
         let button = UIButton()
         button.setImage(image, for: .normal)
-        button.backgroundColor = UIColor.gray.withAlphaComponent(0.4)
-        button.layer.cornerRadius = 26
+        button.backgroundColor = UIColor.white.withAlphaComponent(0.7)
+        button.layer.cornerRadius = 24
         button.translatesAutoresizingMaskIntoConstraints = false
         button.clipsToBounds = true
         
-        let padding: CGFloat = 14
+        let padding: CGFloat = 13
         button.contentEdgeInsets = UIEdgeInsets(top: padding, left: padding, bottom: padding, right: padding)
         
         button.addTarget(self, action: #selector(switchCamera), for: .touchUpInside)
         return button
+    }()
+    
+    lazy var flashToggleButton: UIButton = {
+        let image = isFlashOn ? UIImage(named: "flash-on") : UIImage(named: "flash-off")
+        let button = UIButton()
+        button.setImage(image, for: .normal)
+        button.backgroundColor = UIColor.white.withAlphaComponent(0.7)
+        button.layer.cornerRadius = 24
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.clipsToBounds = true
+        
+        let padding: CGFloat = 13
+        button.contentEdgeInsets = UIEdgeInsets(top: padding, left: padding, bottom: padding, right: padding)
+        
+        button.addTarget(self, action: #selector(toggleFlashState), for: .touchUpInside)
+        return button
+    }()
+    
+    lazy var timerLabel: CustomUILabel = {
+        let label = CustomUILabel()
+        label.layer.cornerRadius = 6
+        label.textColor = .white
+        label.backgroundColor = .red.withAlphaComponent(0.7)
+        label.textAlignment = .center
+        label.isHidden = true
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.clipsToBounds = true
+
+        label.paddingTop = 3
+        label.paddingBottom = 3
+        label.paddingLeft = 5
+        label.paddingRight = 5
+        return label
     }()
     
     override func viewDidLoad() {
@@ -146,6 +184,8 @@ class CaptureViewController: UIViewController, AVCapturePhotoCaptureDelegate, AV
         view.backgroundColor = .white
         view.addSubview(captureButton)
         view.addSubview(switchButton)
+        view.addSubview(flashToggleButton)
+        view.addSubview(timerLabel)
         
         NSLayoutConstraint.activate([
             captureButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
@@ -155,52 +195,72 @@ class CaptureViewController: UIViewController, AVCapturePhotoCaptureDelegate, AV
             
             switchButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
             switchButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
-            switchButton.heightAnchor.constraint(equalToConstant: 52),
-            switchButton.widthAnchor.constraint(equalToConstant: 52)
+            switchButton.heightAnchor.constraint(equalToConstant: 48),
+            switchButton.widthAnchor.constraint(equalToConstant: 48),
+            
+            flashToggleButton.topAnchor.constraint(equalTo: switchButton.bottomAnchor, constant: 8),
+            flashToggleButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+            flashToggleButton.heightAnchor.constraint(equalToConstant: 48),
+            flashToggleButton.widthAnchor.constraint(equalToConstant: 48),
+            
+            timerLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            timerLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
         ])
         
     }
     
     func setUpCameraSession() {
         DispatchQueue.global(qos: .userInitiated).async {
-            self.captureSession = AVCaptureSession()
-            self.captureSession.beginConfiguration()
-            
-            self.captureSession.automaticallyConfiguresCaptureDeviceForWideColor = true
-            
-            self.setupCameraInput()
-            self.setupCameraPreview()
-            self.setupCameraOutput()
-            
-            self.captureSession.commitConfiguration()
-            self.captureSession.startRunning()
+            if self.captureSession == nil {
+                print("Initiating capture session...")
+                self.captureSession = AVCaptureSession()
+                self.captureSession.beginConfiguration()
+                
+                self.captureSession.automaticallyConfiguresCaptureDeviceForWideColor = true
+                
+                self.setupCameraInput()
+                self.setupCameraPreview()
+                self.setupCameraOutput()
+                
+                self.captureSession.commitConfiguration()
+                self.captureSession.startRunning()
+                self.updateFlashConfig()
+
+            } else {
+                if !self.captureSession.isRunning {
+                    print("Restarting capture session...")
+                    self.captureSession.startRunning()
+                }
+            }
         }
     }
     
     func setupCameraInput() {
         // setting up back camera
-        guard let backCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
+        guard let _backCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
             fatalError("Could not create back camera.")
         }
         
-        guard let _backInput = try? AVCaptureDeviceInput(device: backCamera) else {
+        guard let _backInput = try? AVCaptureDeviceInput(device: _backCamera) else {
             fatalError("Could not create back input")
         }
         
+        backCamera = _backCamera
         backInput = _backInput
         guard captureSession.canAddInput(backInput) else {
             fatalError("Could not add back input to capture session.")
         }
         
         // setting up front camera
-        guard let frontCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) else {
+        guard let _frontCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) else {
             fatalError("Could not create front camera.")
         }
         
-        guard let _frontInput = try? AVCaptureDeviceInput(device: frontCamera) else {
+        guard let _frontInput = try? AVCaptureDeviceInput(device: _frontCamera) else {
             fatalError("Could not create front input")
         }
         
+        frontCamera = _frontCamera
         frontInput = _frontInput
         guard captureSession.canAddInput(frontInput) else {
             fatalError("Could not add front input to capture session.")
@@ -248,6 +308,7 @@ class CaptureViewController: UIViewController, AVCapturePhotoCaptureDelegate, AV
     }
     
     func updateCameraOutput() {
+        print("DEBUG: \(#function) called")
         captureSession.beginConfiguration()
         if !captureSession.outputs.isEmpty {
             let currentOutput = captureSession.outputs.first
@@ -272,6 +333,7 @@ class CaptureViewController: UIViewController, AVCapturePhotoCaptureDelegate, AV
         }
         
         updateCameraInput()
+        updateFlashConfig()
     }
     
     func capturePhoto() {
@@ -282,9 +344,11 @@ class CaptureViewController: UIViewController, AVCapturePhotoCaptureDelegate, AV
     
     @objc func startVideoRecording() {
         print("DEBUG: \(#function) called")
+        showUIForVideoRecording()
         cameraOutput = .video
         updateCameraOutput()
         
+        print("Preparing output file.")
         let outputPath = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("basic-camera-output.mov")
         if FileManager.default.fileExists(atPath: outputPath.path()) {
             try! FileManager.default.removeItem(at: outputPath)
@@ -296,9 +360,40 @@ class CaptureViewController: UIViewController, AVCapturePhotoCaptureDelegate, AV
         videoOutput.startRecording(to: outputPath, recordingDelegate: self)
     }
     
-    @objc func stopVideoRecording() {
+    func showUIForVideoRecording() {
+        captureButton.layer.borderColor = UIColor.red.cgColor
+        captureButton.layer.borderWidth = 8
+        
+        elapsedTime = 0
+        timer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(timerAction), userInfo: nil, repeats: true)
+    }
+    
+    @objc func timerAction() {
+        elapsedTime += 1.0
+        timerLabel.text = formatTime(time: elapsedTime)
+        timerLabel.isHidden = false
+    }
+    
+    func formatTime(time: TimeInterval) -> String {
+        let seconds = Int(time) % 60
+        let minutes = Int(time) / 60 % 60
+        let hours = Int(time) / 3600
+        
+        return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
+    }
+    
+    func hideUIForVideoRecording() {
+        captureButton.layer.borderColor = UIColor.black.withAlphaComponent(0.75).cgColor
+        captureButton.layer.borderWidth = 5
+        
+        timer?.invalidate()
+        timerLabel.isHidden = true
+    }
+    
+    @objc func stopVideoRecording() {   
         print("DEBUG: \(#function) called")
         videoOutput.stopRecording()
+        hideUIForVideoRecording()
     }
     
     func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
@@ -317,17 +412,19 @@ class CaptureViewController: UIViewController, AVCapturePhotoCaptureDelegate, AV
     }
     
     func updateCameraInput() {
-        captureSession.beginConfiguration()
-        let currentInput = captureSession.inputs.last
-        captureSession.removeInput(currentInput!)
-        print("Removing current camera input")
-        
-        if cameraState == .back {
-            captureSession.addInput(backInput)
-        } else {
-            captureSession.addInput(frontInput)
+        DispatchQueue.global(qos: .default).async {
+            self.captureSession.beginConfiguration()
+            let currentInput = self.captureSession.inputs.last
+            self.captureSession.removeInput(currentInput!)
+            print("Removing current camera input")
+            
+            if self.cameraState == .back {
+                self.captureSession.addInput(self.backInput)
+            } else {
+                self.captureSession.addInput(self.frontInput)
+            }
+            self.captureSession.commitConfiguration()
         }
-        captureSession.commitConfiguration()
     }
     
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
@@ -345,6 +442,7 @@ class CaptureViewController: UIViewController, AVCapturePhotoCaptureDelegate, AV
         DispatchQueue.global(qos: .userInitiated).async {
             if self.captureSession != nil {
                 // can remove this too for faster camera re-start
+                print("Stopping camera session...")
                 self.captureSession.stopRunning()
             }
         }
@@ -359,6 +457,45 @@ class CaptureViewController: UIViewController, AVCapturePhotoCaptureDelegate, AV
         }
 
         navigationController?.pushViewController(destinationVC, animated: true)
+    }
+    
+    @objc func toggleFlashState() {
+        isFlashOn = !isFlashOn
+
+        let image = isFlashOn ? UIImage(named: "flash-on") : UIImage(named: "flash-off")
+        flashToggleButton.setImage(image, for: .normal)
+        
+        updateFlashConfig()
+    }
+    
+    func updateFlashConfig() {
+        let device = cameraState == .back ? backCamera : frontCamera
+        updateFlashStateForDevice(device: device!)
+    }
+    
+    func updateFlashStateForDevice(device: AVCaptureDevice) {
+        print("DEBUG: \(#function) called")
+        if (device.hasTorch)
+        {
+            DispatchQueue.main.async {
+                self.flashToggleButton.isEnabled = true
+                self.flashToggleButton.alpha = 1
+            }
+            do {
+                try device.lockForConfiguration()
+                device.torchMode = isFlashOn ? .on : .off
+                device.unlockForConfiguration()
+                print("Changed flash state to \(isFlashOn)")
+            }
+            catch {
+                fatalError("Failed updating flash.")
+            }
+        } else {
+            DispatchQueue.main.async {
+                self.flashToggleButton.isEnabled = false
+                self.flashToggleButton.alpha = 0.5
+            }
+        }
     }
 }
 
