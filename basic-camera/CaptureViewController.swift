@@ -365,11 +365,16 @@ class CaptureViewController: UIViewController, AVCapturePhotoCaptureDelegate, AV
         captureButton.layer.borderWidth = 8
         
         elapsedTime = 0
+        updateTimerText()
         timer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(timerAction), userInfo: nil, repeats: true)
     }
     
     @objc func timerAction() {
         elapsedTime += 1.0
+        updateTimerText()
+    }
+    
+    func updateTimerText() {
         timerLabel.text = formatTime(time: elapsedTime)
         timerLabel.isHidden = false
     }
